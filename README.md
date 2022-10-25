@@ -1,5 +1,5 @@
 # Repository-Flow
-Example project featuring the Repository Pattern using flows and clean architecture.
+Example project featuring the offline-first (SSOT) Repository Pattern and its implementation using clean-architecture principles.
 
 [Clean Architecture](https://developer.android.com/topic/architecture)
 
