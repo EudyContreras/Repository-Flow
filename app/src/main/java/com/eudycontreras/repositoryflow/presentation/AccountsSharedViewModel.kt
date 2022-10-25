@@ -3,13 +3,21 @@ package com.eudycontreras.repositoryflow.presentation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.eudycontreras.repositoryflow.data.remote.dto.TransactionDto
 import com.eudycontreras.repositoryflow.data.repository.AccountsRepositoryImpl
-import com.eudycontreras.repositoryflow.domain.repository.AccountsRepository
+import com.eudycontreras.repositoryflow.domain.model.Account
 import com.eudycontreras.repositoryflow.utils.LinkDto
 import com.eudycontreras.repositoryflow.utils.Resource
 import com.eudycontreras.repositoryflow.utils.ResourceError
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
+
+sealed class AccountsUIState {
+    object Loading: AccountsUIState()
+    data class Success(val accounts: List<Account>, val isFromCache: Boolean): AccountsUIState()
+    data class Failure(val errorMessage: String, val onRetry: () -> Unit): AccountsUIState()
+}
 
 class AccountsSharedViewModel(
     private val someStaticLinkDto: LinkDto
@@ -21,16 +29,16 @@ class AccountsSharedViewModel(
             when (it) {
                 is Resource.Loading -> AccountsUIState.Loading
                 is Resource.Failure -> AccountsUIState.Failure(resolveErrorMessage(it.error), it.onInvalidate)
-                is Resource.Success -> AccountsUIState.Success(it.data, it.isFromCache)//
+                is Resource.Success -> AccountsUIState.Success(it.data, it.isFromCache)
             }
         }.shareIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000)
+            started = SharingStarted.Lazily
         )
     }
 
     private fun resolveErrorMessage(failure: ResourceError): String {
-        return "Some error message"
+        return "Failure" // Build from the error
     }
 
     companion object {

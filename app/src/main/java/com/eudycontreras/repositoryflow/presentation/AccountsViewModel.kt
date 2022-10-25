@@ -12,10 +12,10 @@ import com.eudycontreras.repositoryflow.utils.ResourceError
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-sealed class AccountsUIState {
-    object Loading: AccountsUIState()
-    data class Success(val accounts: List<Account>, val isFromCache: Boolean): AccountsUIState()
-    data class Failure(val errorMessage: String, val onRetry: () -> Unit): AccountsUIState()
+sealed class AccountUIState {
+    object Loading: AccountUIState()
+    data class Success(val account: Account, val isFromCache: Boolean): AccountUIState()
+    data class Failure(val errorMessage: String, val onRetry: () -> Unit): AccountUIState()
 }
 
 class AccountsViewModel(
@@ -25,17 +25,17 @@ class AccountsViewModel(
     /**
      * We do not want to expose suspend functions from the VM
      */
-    fun fetchData(linkDto: LinkDto): StateFlow<AccountsUIState> {
-        return repository.getAccounts(linkDto).map {
+    fun fetchData(linkDto: LinkDto): StateFlow<AccountUIState> {
+        return repository.getAccount(linkDto).map {
             when (it) {
-                is Resource.Loading -> AccountsUIState.Loading
-                is Resource.Success -> AccountsUIState.Success(it.data, it.isFromCache)
-                is Resource.Failure -> AccountsUIState.Failure(resolveErrorMessage(it.error), it.onInvalidate)
+                is Resource.Loading -> AccountUIState.Loading
+                is Resource.Success -> AccountUIState.Success(it.data, it.isFromCache)
+                is Resource.Failure -> AccountUIState.Failure(resolveErrorMessage(it.error), it.onInvalidate)
             }
         }.stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(500),
-            initialValue = AccountsUIState.Loading
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = AccountUIState.Loading
         )
     }
 

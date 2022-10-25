@@ -14,11 +14,14 @@ class MockAccountApi: AccountsApi {
     override suspend fun post(data: AccountDto) { }
 
     override suspend fun get(link: LinkDto): Result<AccountDto> {
-        TODO("Not yet implemented")
+        responseDelay(1000)
+        return if(Random.nextBoolean()) {
+            Result.Success(MockAccounts.first())
+        } else Result.Failure("Some error")
     }
 
     override suspend fun getMany(link: LinkDto): Result<List<AccountDto>> {
-        responseDelay(1300)
+        responseDelay(1500)
         return if(Random.nextBoolean()) {
             Result.Success(MockAccounts)
         } else Result.Failure("Some error")
@@ -33,7 +36,7 @@ class MockTransactionsApi: TransactionsApi {
     }
 
     override suspend fun getMany(link: LinkDto): Result<List<TransactionDto>> {
-        responseDelay(1000)
+        responseDelay(2000)
         return Result.Success(MockTransactions)
     }
 }

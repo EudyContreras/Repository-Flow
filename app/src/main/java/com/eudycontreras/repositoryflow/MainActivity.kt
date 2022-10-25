@@ -11,6 +11,7 @@ import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -45,7 +46,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val accountLink = app.sessionHandler.resolveLink(AccountDto.ACCOUNTS_DTO_REL)
+
         setContent {
             RepositoryFlowTheme {
                 Surface(
@@ -54,12 +55,16 @@ class MainActivity : ComponentActivity() {
                 ) {
                    Column {
                        Box {
-                           val request = remember { accountsViewModel.fetchData(accountLink) }
-                           val accountsState = request.consume()
+                           val accountsFlow = remember {
+                               accountsViewModel.fetchData(
+                                   linkDto = app.sessionHandler.resolveLink(AccountDto.ACCOUNTS_DTO_REL)
+                               )
+                           }
+                           val accountsState = accountsFlow.consume()
                            when(val state = accountsState.value) {
-                               is AccountsUIState.Loading -> Text(text = "Loading")
-                               is AccountsUIState.Success -> Text(text = "Success")
-                               is AccountsUIState.Failure -> {
+                               is AccountUIState.Loading -> Text(text = "Loading")
+                               is AccountUIState.Success -> Text(text = "Success")
+                               is AccountUIState.Failure -> {
                                    Button(onClick = { state.onRetry() }) {
                                        Text(text = "Retry")
                                    }
@@ -71,7 +76,7 @@ class MainActivity : ComponentActivity() {
                            when(val state = transactionsState.value) {
                                is TransactionsUIState.Loading -> Text(text = "Loading")
                                is TransactionsUIState.Success -> Text(text = "Success")
-                               is TransactionsUIState.Failure -> Text(text = "Failure")
+                               is TransactionsUIState.Failure -> Text(text = state.errorMessage)
                            }
                        }
 
@@ -80,8 +85,8 @@ class MainActivity : ComponentActivity() {
                        Spacer(modifier = Modifier.height(20.dp))
 
                        Box {
-                           val accountsState = sharedAccountsViewModel.accounts.consume(AccountsUIState.Loading)
-                           when(val state = accountsState.value) {
+                           val accountsState by sharedAccountsViewModel.accounts.consume(AccountsUIState.Loading)
+                           when(val state = accountsState) {
                                is AccountsUIState.Loading -> Text(text = "Loading")
                                is AccountsUIState.Success -> Text(text = "Success")
                                is AccountsUIState.Failure -> {
@@ -92,8 +97,8 @@ class MainActivity : ComponentActivity() {
                            }
                        }
                        Box {
-                           val accountsState = sharedAccountsViewModel.accounts.consume(AccountsUIState.Loading)
-                           when(val state = accountsState.value) {
+                           val accountsState by sharedAccountsViewModel.accounts.consume(AccountsUIState.Loading)
+                           when(val state = accountsState) {
                                is AccountsUIState.Loading -> Text(text = "Loading")
                                is AccountsUIState.Success -> Text(text = "Success")
                                is AccountsUIState.Failure -> {
