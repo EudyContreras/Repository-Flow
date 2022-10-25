@@ -4,38 +4,28 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.eudycontreras.repositoryflow.data.remote.dto.TransactionDto
-import com.eudycontreras.repositoryflow.domain.model.Account
+import com.eudycontreras.repositoryflow.data.repository.AccountsRepositoryImpl
 import com.eudycontreras.repositoryflow.domain.repository.AccountsRepository
 import com.eudycontreras.repositoryflow.utils.LinkDto
 import com.eudycontreras.repositoryflow.utils.Resource
 import com.eudycontreras.repositoryflow.utils.ResourceError
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 
-sealed class AccountsUIState {
-    object Loading: AccountsUIState()
-    data class Success(val accounts: List<Account>, val isFromCache: Boolean): AccountsUIState()
-    data class Failure(val errorMessage: String, val onRetry: () -> Unit): AccountsUIState()
-}
-
-class AccountsViewModel(
-    private val repository: AccountsRepository
+class AccountsSharedViewModel(
+    private val someStaticLinkDto: LinkDto
 ): ViewModel() {
 
-    /**
-     * We do not want to expose suspend functions from the VM
-     */
-    fun fetchData(linkDto: LinkDto): StateFlow<AccountsUIState> {
-        return repository.getAccounts(linkDto).map {
+    val accounts: SharedFlow<AccountsUIState> by lazy {
+        val repository = AccountsRepositoryImpl.getInstance()
+        repository.getAccounts(someStaticLinkDto).map {
             when (it) {
                 is Resource.Loading -> AccountsUIState.Loading
-                is Resource.Success -> AccountsUIState.Success(it.data, it.isFromCache)
                 is Resource.Failure -> AccountsUIState.Failure(resolveErrorMessage(it.error), it.onInvalidate)
+                is Resource.Success -> AccountsUIState.Success(it.data, it.isFromCache)//
             }
-        }.stateIn(
+        }.shareIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(500),
-            initialValue = AccountsUIState.Loading
+            started = SharingStarted.WhileSubscribed(5000)
         )
     }
 
@@ -45,12 +35,12 @@ class AccountsViewModel(
 
     companion object {
         fun getFactory(
-            repository: AccountsRepository
+            linkDto: LinkDto
         ) = object : ViewModelProvider.NewInstanceFactory() {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 @Suppress("UNCHECKED_CAST")
-                return AccountsViewModel(
-                    repository = repository
+                return AccountsSharedViewModel(
+                    someStaticLinkDto = linkDto
                 ) as T
             }
         }

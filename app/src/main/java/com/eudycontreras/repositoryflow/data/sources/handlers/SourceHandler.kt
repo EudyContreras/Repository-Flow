@@ -5,14 +5,14 @@ import com.eudycontreras.repositoryflow.utils.LinkDto
 import com.eudycontreras.repositoryflow.utils.Resource
 import com.eudycontreras.repositoryflow.utils.ResourceError
 import com.eudycontreras.repositoryflow.utils.Result
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import com.eudycontreras.repositoryflow.utils.onFailure
+import com.eudycontreras.repositoryflow.utils.invalidationFlow
 
-fun <T, R> resolveFlow(
+inline fun <T, reified R> resolveFlow(
     link: LinkDto,
     remoteSource: RemoteSource<T>,
-    mapper: (T) -> R
-): Flow<Resource<R>> = flow {
+    crossinline mapper: (T) -> R
+) = invalidationFlow<R> { onInvalidate ->
     emit(Resource.Loading)
     try {
         when (val result = remoteSource.get(link)) {
@@ -21,19 +21,19 @@ fun <T, R> resolveFlow(
                 emit(Resource.Success(mapper(data)))
             }
             is Result.Failure -> {
-                emit(Resource.Failure(ResourceError.RemoteSourceError(result.error)))
+                onFailure(ResourceError.RemoteSourceError(result.error), onInvalidate)
             }
         }
     } catch (ex: Exception) { // Some more specific network exception here:
-        emit(Resource.Failure(ResourceError.Unknown(ex)))
+        onFailure(ResourceError.Unknown(ex), onInvalidate)
     }
 }
 
-fun <T, R> resolveFlowOfMany(
+inline fun <T, reified R> resolveFlowOfMany(
     link: LinkDto,
     remoteSource: RemoteSource<T>,
-    mapper: (List<T>) -> List<R>
-): Flow<Resource<List<R>>> = flow {
+    crossinline mapper: (List<T>) -> List<R>
+) = invalidationFlow<List<R>> { onInvalidate ->
     emit(Resource.Loading)
     try {
         when (val result = remoteSource.getMany(link)) {
@@ -42,10 +42,10 @@ fun <T, R> resolveFlowOfMany(
                 emit(Resource.Success(mapper(data)))
             }
             is Result.Failure -> {
-                emit(Resource.Failure(ResourceError.RemoteSourceError(result.error)))
+                onFailure(ResourceError.RemoteSourceError(result.error), onInvalidate)
             }
         }
     } catch (ex: Exception) { // Some more specific network exception here:
-        emit(Resource.Failure(ResourceError.Unknown(ex)))
+        onFailure(ResourceError.Unknown(ex), onInvalidate)
     }
 }

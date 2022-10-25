@@ -6,22 +6,37 @@ import com.eudycontreras.repositoryflow.utils.LinkDto
 import com.eudycontreras.repositoryflow.utils.Resource
 import com.eudycontreras.repositoryflow.utils.ResourceError
 import com.eudycontreras.repositoryflow.utils.Result
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import com.eudycontreras.repositoryflow.utils.onFailure
+import com.eudycontreras.repositoryflow.utils.invalidationFlow
 
-fun <T, R> resolveFlow(
+/**
+ * When we have a local and a remote source we can use
+ * different strategies to resolve which source to use.
+ * Typically there should always be only one source of truth which is the
+ * local source. Other strategies can be used too:
+ *
+ * * Network-First, (Show new data or cache in case of failure)
+ * * Cache-First, (Show cache or get new data if there is no cache)
+ * * State-While-Revalidate, (Can show old data while getting new data)
+ * * Network-Only, (Changes frequently)
+ * * Cache-Only, (Never expected to change)
+ * * Etc
+ *
+ * Typically this is handle within the network layer
+ */
+inline fun <T, reified R> resolveFlow(
     link: LinkDto,
-    localSource: LocalSource.Available<LinkDto, T>,
+    localSource: LocalSource.KeyValue<LinkDto, T>,
     remoteSource: RemoteSource<T>,
-    mapper: (T) -> R
-): Flow<Resource<R>> = flow {
+    crossinline mapper: (T) -> R
+) = invalidationFlow<R> { onInvalidate ->
     emit(Resource.Loading)
     val cacheFallback: suspend (error: ResourceError) -> Unit = { error ->
         val cache = localSource.getData(key = link)
         if (cache != null) {
             emit(Resource.Success(mapper(cache), isFromCache = true))
         } else {
-            emit(Resource.Failure(error))
+            onFailure(error, onInvalidate)
         }
     }
     try {
@@ -32,32 +47,32 @@ fun <T, R> resolveFlow(
                 emit(Resource.Success(mapper(truth)))
             }
             is Result.Failure -> {
-                emit(Resource.Failure(ResourceError.RemoteSourceError(result.error)))
+                onFailure(ResourceError.RemoteSourceError(result.error), onInvalidate)
 
                 // Here we can alternatively fallback to cache if that's our strategy
                 cacheFallback(ResourceError.RemoteSourceError(result.error))
             }
         }
     } catch (ex: Exception) { // Some more specific network exception here:
-        emit(Resource.Failure(ResourceError.Unknown(ex)))
+        onFailure(ResourceError.Unknown(ex), onInvalidate)
         // Here we can alternatively fallback to cache if that's our strategy
         cacheFallback(ResourceError.Unknown(ex))
     }
 }
 
-fun <T, R> resolveFlowOfMany(
+inline fun <T, reified R> resolveFlowOfMany(
     link: LinkDto,
-    localSource: LocalSource.Available<LinkDto, T>,
+    localSource: LocalSource.KeyValue<LinkDto, T>,
     remoteSource: RemoteSource<T>,
-    mapper: (List<T>) -> List<R>
-): Flow<Resource<List<R>>> = flow {
+    crossinline mapper: (List<T>) -> List<R>
+) = invalidationFlow<List<R>> { onInvalidate ->
     emit(Resource.Loading)
     val cacheFallback: suspend (error: ResourceError) -> Unit = { error ->
         val cache = localSource.getCollection(key = link)
         if (cache != null) {
             emit(Resource.Success(mapper(cache), isFromCache = true))
         } else {
-            emit(Resource.Failure(error))
+            onFailure(error, onInvalidate)
         }
     }
     try {
@@ -68,14 +83,14 @@ fun <T, R> resolveFlowOfMany(
                 emit(Resource.Success(mapper(truth)))
             }
             is Result.Failure -> {
-                emit(Resource.Failure(ResourceError.RemoteSourceError(result.error)))
+                onFailure(ResourceError.RemoteSourceError(result.error), onInvalidate)
 
                 // Here we can alternatively fallback to cache if that's our strategy
                 cacheFallback(ResourceError.RemoteSourceError(result.error))
             }
         }
     } catch (ex: Exception) { // Some more specific network exception here:
-        emit(Resource.Failure(ResourceError.Unknown(ex)))
+        onFailure(ResourceError.Unknown(ex), onInvalidate)
         // Here we can alternatively fallback to cache if that's our strategy
         cacheFallback(ResourceError.Unknown(ex))
     }

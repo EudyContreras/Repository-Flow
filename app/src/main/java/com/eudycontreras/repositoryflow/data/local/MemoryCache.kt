@@ -6,9 +6,10 @@ import java.util.concurrent.ConcurrentHashMap
 
 /**
  * This is just for the sake of the example
- * Some local source (DB, Redix, LocalCache, Etc)
+ * Some local source (DB, DataStore, Redix, LocalCache, Etc)
  */
-class MemoryCache<T>: LocalSource.Available<LinkDto, T> {
+class MemoryCache<T>: LocalSource.KeyValue<LinkDto, T> {
+
     // Ideally use weak references for memory caches
     private val cacheForSingle: ConcurrentHashMap<LinkDto, T> = ConcurrentHashMap()
     private val cacheForMany: ConcurrentHashMap<LinkDto, List<T>> = ConcurrentHashMap()
@@ -33,5 +34,10 @@ class MemoryCache<T>: LocalSource.Available<LinkDto, T> {
             this[key] = data
             getValue(key)
         }
+    }
+
+    override fun clear() {
+        cacheForSingle.clear()
+        cacheForMany.clear()
     }
 }

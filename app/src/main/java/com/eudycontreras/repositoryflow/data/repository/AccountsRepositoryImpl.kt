@@ -12,30 +12,15 @@ import com.eudycontreras.repositoryflow.utils.LinkDto
 import com.eudycontreras.repositoryflow.utils.Resource
 import kotlinx.coroutines.flow.Flow
 
-/**
- * When we have a local and a remote source we can use
- * different strategies to resolve which source to use.
- * Typically there should always be only one source of truth which is the
- * local source. Other strategies can be used too:
- *
- * * Network-First,
- * * Cache-First,
- * * State-While-Revalidate,
- * * Network-Only,
- * * Cache-Only,
- * * Etc
- *
- * Typically this is handle within the network layer
- */
 class AccountsRepositoryImpl(
-    private val localSource: LocalSource<LinkDto, AccountDto>,  // This is optional
+    private val localSource: LocalSource<LinkDto, AccountDto>, // This is optional
     private val remoteSource: RemoteSource<AccountDto> // Collection of endpoints/network calls
 ): AccountsRepository {
 
     override fun getAccounts(link: LinkDto): Flow<Resource<List<Account>>> {
         val mapper: (List<AccountDto>) -> List<Account> = { items -> items.map { it.toAccount() } }
         return when (localSource) {
-            is LocalSource.Available -> resolveFlowOfMany(link, localSource, remoteSource, mapper)
+            is LocalSource.KeyValue -> resolveFlowOfMany(link, localSource, remoteSource, mapper)
             is LocalSource.Unavailable -> resolveFlowOfMany(link, remoteSource, mapper)
         }
     }
@@ -43,7 +28,7 @@ class AccountsRepositoryImpl(
     override fun getAccount(link: LinkDto): Flow<Resource<Account>> {
         val mapper: (AccountDto) -> Account = { it.toAccount() }
         return when (localSource) {
-            is LocalSource.Available -> resolveFlow(link, localSource, remoteSource, mapper)
+            is LocalSource.KeyValue -> resolveFlow(link, localSource, remoteSource, mapper)
             is LocalSource.Unavailable -> resolveFlow(link, remoteSource, mapper)
         }
     }
@@ -51,18 +36,18 @@ class AccountsRepositoryImpl(
     companion object {
 
         @Volatile
-        private var intance: AccountsRepository? = null
+        private var instance: AccountsRepository? = null
 
         fun getInstance(): AccountsRepository =
-            intance ?: throw IllegalStateException("An instance must be build in the app")
+            instance ?: throw IllegalStateException("An instance must be build in the app")
 
         fun buildInstance(
             localSource: LocalSource<LinkDto, AccountDto>,
             remoteSource: RemoteSource<AccountDto>
         ) {
             synchronized(this) {
-                if (intance == null) {
-                    intance = AccountsRepositoryImpl(
+                if (instance == null) {
+                    instance = AccountsRepositoryImpl(
                         localSource = localSource,
                         remoteSource = remoteSource
                     )
