@@ -1,12 +1,11 @@
 package com.eudycontreras.repositoryflow.data.sources.handlers
 
 import com.eudycontreras.repositoryflow.data.sources.RemoteSource
-import com.eudycontreras.repositoryflow.utils.LinkDto
-import com.eudycontreras.repositoryflow.utils.Resource
-import com.eudycontreras.repositoryflow.utils.ResourceError
-import com.eudycontreras.repositoryflow.utils.Result
-import com.eudycontreras.repositoryflow.utils.onFailure
-import com.eudycontreras.repositoryflow.utils.invalidationFlow
+import com.eudycontreras.repositoryflow.utils.*
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.isActive
 
 inline fun <T, reified R> resolveFlow(
     link: LinkDto,
@@ -26,6 +25,31 @@ inline fun <T, reified R> resolveFlow(
         }
     } catch (ex: Exception) { // Some more specific network exception here:
         onFailure(ResourceError.Unknown(ex), onInvalidate)
+    }
+}
+
+inline fun <reified R> resolvePollingFlow(
+    interval: Long,
+    crossinline networkCall: suspend () -> Result<R>
+) = invalidationFlow<R> { onInvalidate ->
+    emit(Resource.Loading)
+    poll@ while(currentCoroutineContext().isActive) {
+        try {
+            when (val result = networkCall()) {
+                is Result.Success -> {
+                    val data = result.data
+                    emit(Resource.Success(data))
+                }
+                is Result.Failure -> {
+                    onFailure(ResourceError.RemoteSourceError(result.error), onInvalidate)
+                    break@poll
+                }
+            }
+        } catch (ex: Exception) { // Some more specific network exception here:
+            onFailure(ResourceError.Unknown(ex), onInvalidate)
+            break@poll
+        }
+        delay(interval)
     }
 }
 

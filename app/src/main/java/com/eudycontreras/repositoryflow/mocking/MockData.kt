@@ -1,42 +1,42 @@
 package com.eudycontreras.repositoryflow.mocking
 
-import com.eudycontreras.repositoryflow.data.remote.dto.AccountDto
-import com.eudycontreras.repositoryflow.data.remote.dto.TransactionDto
+import com.eudycontreras.repositoryflow.data.remote.dto.AccountDTO
+import com.eudycontreras.repositoryflow.data.remote.dto.TransactionDTO
 import java.util.*
 
 
 val MockAccounts = listOf(
-    AccountDto(
+    AccountDTO(
         id = UUID.randomUUID().toString(),
-        iban = "ashdfasdhf232rhasdfhakh3w23",
-        balance = "1000 sek",
+        iban = "some_iban_id",
+        balance = "1300",
         propertyA = "Savings Property",
         propertyB = null
     ),
-    AccountDto(
+    AccountDTO(
         id = UUID.randomUUID().toString(),
-        iban = "assd3hdfasdhf232rhasdfhakh3w23",
-        balance = "20000 sek",
+        iban = "some_iban_id",
+        balance = "20000",
         propertyA = null,
         propertyB = "Debit Property"
     )
 )
 
 val MockTransactions = listOf(
-    TransactionDto(
+    TransactionDTO(
         id = UUID.randomUUID().toString(),
         amount = "1000",
-        sourceAccountId = "someSourceAccountId",
-        targetAccountId = "someTargetAccountId",
-        propertyA = "Savings Property",
+        sourceAccountId = "some_account_id",
+        targetAccountId = "some_account_id",
+        propertyA = "Internal Transaction Property",
         propertyB = null
     ),
-    TransactionDto(
+    TransactionDTO(
         id = UUID.randomUUID().toString(),
         amount = "1000",
-        sourceAccountId = "someSourceAccountId",
-        targetAccountId = "someTargetAccountId",
+        sourceAccountId = "some_account_id",
+        targetAccountId = "some_account_id",
         propertyA = null,
-        propertyB = "Debit Property"
+        propertyB = "External Transaction Property"
     )
 )

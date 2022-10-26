@@ -1,9 +1,9 @@
 package com.eudycontreras.repositoryflow.data.mapper
 
-import com.eudycontreras.repositoryflow.data.remote.dto.AccountDto
+import com.eudycontreras.repositoryflow.data.remote.dto.AccountDTO
 import com.eudycontreras.repositoryflow.domain.model.Account
 
-fun AccountDto.toAccount(): Account {
+fun AccountDTO.toAccount(): Account {
     return when {
         propertyA != null -> Account.Savings(
             id = id.orEmpty(),

@@ -1,42 +1,51 @@
 package com.eudycontreras.repositoryflow.mocking
 
-import com.eudycontreras.repositoryflow.data.remote.api.AccountsApi
-import com.eudycontreras.repositoryflow.data.remote.api.TransactionsApi
-import com.eudycontreras.repositoryflow.data.remote.dto.AccountDto
-import com.eudycontreras.repositoryflow.data.remote.dto.TransactionDto
+import com.eudycontreras.repositoryflow.data.remote.api.AccountsService
+import com.eudycontreras.repositoryflow.data.remote.api.TransactionsService
+import com.eudycontreras.repositoryflow.data.remote.dto.AccountDTO
+import com.eudycontreras.repositoryflow.data.remote.dto.TransactionDTO
 import com.eudycontreras.repositoryflow.utils.LinkDto
 import com.eudycontreras.repositoryflow.utils.Result
 import kotlinx.coroutines.delay as responseDelay
-import java.util.UUID
 import kotlin.random.Random
 
-class MockAccountApi: AccountsApi {
-    override suspend fun post(data: AccountDto) { }
+class MockAccountApi: AccountsService {
+    override suspend fun post(data: AccountDTO) { }
 
-    override suspend fun get(link: LinkDto): Result<AccountDto> {
-        responseDelay(1000)
-        return if(Random.nextBoolean()) {
-            Result.Success(MockAccounts.first())
-        } else Result.Failure("Some error")
+    override suspend fun get(link: LinkDto): Result<AccountDTO> {
+        TODO("Not yet implemented")
     }
 
-    override suspend fun getMany(link: LinkDto): Result<List<AccountDto>> {
+    override suspend fun getMany(link: LinkDto): Result<List<AccountDTO>> {
         responseDelay(1500)
         return if(Random.nextBoolean()) {
             Result.Success(MockAccounts)
         } else Result.Failure("Some error")
     }
+
+    private var value: Double = 10000.0
+
+    override suspend fun getTotalBalance(): Result<Double> {
+        responseDelay(500)
+        return try {
+            Result.Success(value)
+        } finally {
+            value -= 10
+        }
+    }
 }
 
-class MockTransactionsApi: TransactionsApi {
-    override suspend fun post(data: TransactionDto) { }
+class MockTransactionsApi: TransactionsService {
+    override suspend fun post(data: TransactionDTO) { }
 
-    override suspend fun get(link: LinkDto): Result<TransactionDto> {
+    override suspend fun get(link: LinkDto): Result<TransactionDTO> {
         TODO("Not yet implemented")
     }
 
-    override suspend fun getMany(link: LinkDto): Result<List<TransactionDto>> {
+    override suspend fun getMany(link: LinkDto): Result<List<TransactionDTO>> {
         responseDelay(2000)
-        return Result.Success(MockTransactions)
+        return if (Random.nextBoolean()) {
+            Result.Success(MockTransactions)
+        } else Result.Success(emptyList())
     }
 }

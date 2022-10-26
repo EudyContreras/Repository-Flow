@@ -1,7 +1,7 @@
 package com.eudycontreras.repositoryflow.data.repository
 
 import com.eudycontreras.repositoryflow.data.mapper.toTransaction
-import com.eudycontreras.repositoryflow.data.remote.dto.TransactionDto
+import com.eudycontreras.repositoryflow.data.remote.dto.TransactionDTO
 import com.eudycontreras.repositoryflow.data.sources.LocalSource
 import com.eudycontreras.repositoryflow.data.sources.RemoteSource
 import com.eudycontreras.repositoryflow.data.sources.handlers.resolveFlowOfMany
@@ -18,10 +18,11 @@ import kotlinx.coroutines.flow.*
  * local source
  */
 class TransactionsRepositoryImpl private constructor(
-    private val localSource: LocalSource<LinkDto, TransactionDto>, // This is optional
-    private val remoteSource: RemoteSource<TransactionDto> // Collection of endpoints/network calls
+    private val localSource: LocalSource<LinkDto, TransactionDTO>, // This is optional
+    private val remoteSource: RemoteSource<TransactionDTO> // Collection of endpoints/network calls
 ): TransactionsRepository {
-    private val mapper: (List<TransactionDto>) -> List<Transaction> = { items ->
+
+    private val mapper: (List<TransactionDTO>) -> List<Transaction> = { items ->
         items.map { it.toTransaction() }
     }
 
@@ -40,8 +41,8 @@ class TransactionsRepositoryImpl private constructor(
             instance ?: throw IllegalStateException("An instance must be build in the app")
 
         fun buildInstance(
-            localSource: LocalSource<LinkDto, TransactionDto> = LocalSource.getDefault(),
-            remoteSource: RemoteSource<TransactionDto>
+            localSource: LocalSource<LinkDto, TransactionDTO> = LocalSource.getDefault(),
+            remoteSource: RemoteSource<TransactionDTO>
         ) {
             synchronized(this) {
                 if (instance == null) {

@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.ExperimentalLifecycleComposeApi
 import androidx.lifecycle.compose.collectAsStateWithLifecycle as consume
-import com.eudycontreras.repositoryflow.data.remote.dto.AccountDto
+import com.eudycontreras.repositoryflow.data.remote.dto.AccountDTO
 import com.eudycontreras.repositoryflow.data.repository.AccountsRepositoryImpl
 import com.eudycontreras.repositoryflow.data.repository.TransactionsRepositoryImpl
 import com.eudycontreras.repositoryflow.presentation.*
@@ -25,15 +25,11 @@ import com.eudycontreras.repositoryflow.ui.theme.RepositoryFlowTheme
 import com.eudycontreras.repositoryflow.utils.app
 
 class MainActivity : ComponentActivity() {
+    private val balanceViewModel: BalanceViewModel by viewModels()
+
     private val accountsViewModel: AccountsViewModel by viewModels {
         AccountsViewModel.getFactory(
             AccountsRepositoryImpl.getInstance()
-        )
-    }
-
-    private val sharedAccountsViewModel: AccountsSharedViewModel by viewModels {
-        AccountsSharedViewModel.getFactory(
-            app.sessionHandler.resolveLink(AccountDto.ACCOUNTS_DTO_REL)
         )
     }
 
@@ -53,18 +49,18 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                   Column {
+                   Column(Modifier.padding(20.dp)) {
                        Box {
                            val accountsFlow = remember {
                                accountsViewModel.fetchData(
-                                   linkDto = app.sessionHandler.resolveLink(AccountDto.ACCOUNTS_DTO_REL)
+                                   linkDto = app.sessionHandler.resolveLink(AccountDTO.ACCOUNTS_DTO_REL)
                                )
                            }
                            val accountsState = accountsFlow.consume()
                            when(val state = accountsState.value) {
-                               is AccountUIState.Loading -> Text(text = "Loading")
-                               is AccountUIState.Success -> Text(text = "Success")
-                               is AccountUIState.Failure -> {
+                               is AccountsUIState.Loading -> Text(text = "Loading")
+                               is AccountsUIState.Success -> Text(text = "Success")
+                               is AccountsUIState.Failure -> {
                                    Button(onClick = { state.onRetry() }) {
                                        Text(text = "Retry")
                                    }
@@ -80,16 +76,14 @@ class MainActivity : ComponentActivity() {
                            }
                        }
 
-                       Spacer(modifier = Modifier.height(20.dp))
-                       Text(text = "Shared Flow Example")
-                       Spacer(modifier = Modifier.height(20.dp))
+                       Text(modifier = Modifier.padding(vertical = 20.dp), text = "Shared Flow Example")
 
                        Box {
-                           val accountsState by sharedAccountsViewModel.accounts.consume(AccountsUIState.Loading)
-                           when(val state = accountsState) {
-                               is AccountsUIState.Loading -> Text(text = "Loading")
-                               is AccountsUIState.Success -> Text(text = "Success")
-                               is AccountsUIState.Failure -> {
+                           val balanceState by balanceViewModel.balance.consume(BalanceUIState.Loading)
+                           when(val state = balanceState) {
+                               is BalanceUIState.Loading -> Text(text = "Loading")
+                               is BalanceUIState.Success -> Text(text = "Success: ${state.balance}")
+                               is BalanceUIState.Failure -> {
                                    Button(onClick = { state.onRetry() }) {
                                        Text(text = "Retry")
                                    }
@@ -97,11 +91,11 @@ class MainActivity : ComponentActivity() {
                            }
                        }
                        Box {
-                           val accountsState by sharedAccountsViewModel.accounts.consume(AccountsUIState.Loading)
-                           when(val state = accountsState) {
-                               is AccountsUIState.Loading -> Text(text = "Loading")
-                               is AccountsUIState.Success -> Text(text = "Success")
-                               is AccountsUIState.Failure -> {
+                           val balanceState by balanceViewModel.balance.consume(BalanceUIState.Loading)
+                           when(val state = balanceState) {
+                               is BalanceUIState.Loading -> Text(text = "Loading")
+                               is BalanceUIState.Success -> Text(text = "Success: ${state.balance}")
+                               is BalanceUIState.Failure -> {
                                    Button(onClick = { state.onRetry() }) {
                                        Text(text = "Retry")
                                    }

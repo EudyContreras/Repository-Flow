@@ -1,9 +1,9 @@
 package com.eudycontreras.repositoryflow.data.mapper
 
-import com.eudycontreras.repositoryflow.data.remote.dto.TransactionDto
+import com.eudycontreras.repositoryflow.data.remote.dto.TransactionDTO
 import com.eudycontreras.repositoryflow.domain.model.Transaction
 
-fun TransactionDto.toTransaction(): Transaction {
+fun TransactionDTO.toTransaction(): Transaction {
     return when {
         propertyA != null -> Transaction.Internal(
             id = id.orEmpty(),

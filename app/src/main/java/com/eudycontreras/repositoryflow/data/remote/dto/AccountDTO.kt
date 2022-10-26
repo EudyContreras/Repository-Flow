@@ -1,6 +1,6 @@
 package com.eudycontreras.repositoryflow.data.remote.dto
 
-data class AccountDto(
+data class AccountDTO(
     val id: String?,
     val iban: String?,
     val balance: String?,

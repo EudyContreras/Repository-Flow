@@ -6,13 +6,10 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.eudycontreras.repositoryflow.BankApplication
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
 
@@ -36,14 +33,18 @@ inline fun <reified T> invalidationFlow(
 ) = flow {
     val semaphore = Semaphore(permits = 1, acquiredPermits = 1)
     while(currentCoroutineContext().isActive) {
-        block { if (!semaphore.hasPermits) semaphore.release() }
+        block {
+            synchronized(this) {
+                if (!semaphore.hasPermits) semaphore.release()
+            }
+        }
         semaphore.acquire()
     }
 }
 
 suspend fun <T> FlowCollector<Resource<T>>.onFailure(
     error: ResourceError,
-    onInvalidate: () -> Unit
+    onInvalidate: () -> Unit = { }
 ) {
     emit(Resource.Failure(error, onInvalidate))
 }

@@ -2,7 +2,7 @@ package com.eudycontreras.repositoryflow
 
 import android.app.Application
 import com.eudycontreras.repositoryflow.data.local.MemoryCache
-import com.eudycontreras.repositoryflow.data.remote.dto.AccountDto
+import com.eudycontreras.repositoryflow.data.remote.dto.AccountDTO
 import com.eudycontreras.repositoryflow.data.repository.AccountsRepositoryImpl
 import com.eudycontreras.repositoryflow.data.repository.TransactionsRepositoryImpl
 import com.eudycontreras.repositoryflow.data.sources.LocalSource
@@ -27,7 +27,7 @@ class BankApplication: Application() {
         /**
          * In some scenarios we may have some shared memory cache
          */
-        val memoryCache: LocalSource.KeyValue<LinkDto, AccountDto> = MemoryCache()
+        val memoryCache: LocalSource.KeyValue<LinkDto, AccountDTO> = MemoryCache()
 
         /**
          * A scope we can use at app level. Can be used for repositories too.
